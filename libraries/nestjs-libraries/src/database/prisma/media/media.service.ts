@@ -12,6 +12,21 @@ import {
   Sections,
   SubscriptionException,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { CreditCostService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/credit-cost.service';
+import { FeatureKey } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/plan-features';
+
+/**
+ * Video sağlayıcı id'sini Publio feature flag'ine map'ler.
+ * Bilinmeyen sağlayıcılar ana "ai.proModels" gating'ine düşer.
+ */
+function featureKeyForVideoType(type: string): FeatureKey {
+  const lower = type.toLowerCase();
+  if (lower.includes('heygen')) return 'video.heyGen';
+  if (lower.includes('runway')) return 'video.runway';
+  if (lower.includes('pika')) return 'video.pika';
+  if (lower.includes('synthesia')) return 'video.synthesia';
+  return 'ai.proModels';
+}
 
 @Injectable()
 export class MediaService {
@@ -21,7 +36,8 @@ export class MediaService {
     private _mediaRepository: MediaRepository,
     private _openAi: OpenaiService,
     private _subscriptionService: SubscriptionService,
-    private _videoManager: VideoManager
+    private _videoManager: VideoManager,
+    private _creditCostService: CreditCostService
   ) {}
 
   async deleteMedia(org: string, id: string) {
@@ -77,6 +93,13 @@ export class MediaService {
     if (!video.trial && org.isTrailing) {
       throw new HttpException('This video is not available in trial mode', 406);
     }
+
+    // Publio: tier-bazlı feature gate (HeyGen/Runway/Pika/Synthesia).
+    // @ts-ignore
+    const dbTier = (org as any)?.subscription?.subscriptionTier ?? null;
+    // @ts-ignore
+    const isEnt = !!(org as any)?.subscription?.isEnterprise;
+    this._creditCostService.assertFeature(dbTier, featureKeyForVideoType(type), isEnt);
 
     return true;
   }

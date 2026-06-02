@@ -43,6 +43,8 @@ model Organization {
   webhooks            Webhooks[]
   oauthApp            OAuthApp[]
   oauthAuthorizations OAuthAuthorization[]
+  aiUsageLog          AIUsageLog[]
+  topUpPackages       TopUpPackage[]
 
   @@index([apiKey])
   @@index([streakSince])
@@ -274,10 +276,21 @@ model Credits {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   type           String       @default("ai_images")
+  // ────────── Publio additions (additive, nullable) ──────────
+  // Aksiyon kataloglundaki id (credit-catalog.ts) — ör. "image.sdxl".
+  action         String?
+  // Sağlayıcı adı ("openai", "heygen" vs.) audit + BYOK için.
+  provider       String?
+  // Bu çağrının bize maliyeti (USD) — margin raporu için.
+  costUsd        Decimal?     @db.Decimal(10, 6)
+  // Top-up paketinden düşmediyse null; aksi halde {@link TopUpPackage.id}.
+  topUpId        String?
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
   @@index([createdAt])
+  @@index([action])
+  @@index([topUpId])
 }
 
 model Subscription {
@@ -292,10 +305,86 @@ model Subscription {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime?
+  // ────────── Publio additions (nullable, default-safe) ──────────
+  // Pazarlama plan adı — "Starter", "Creator", "Pro", "Business", "Agency", "Enterprise".
+  brandTier        String?
+  // Bu plana düşen aylık Publio Credit (plan-features.ts MONTHLY_CREDITS).
+  monthlyCredits   Int?
+  // Burst tavanı (plan'ın %150'si). credit-cost guard'ı buna bakar.
+  burstCap         Int?
+  // Aktif feature anahtarları JSON (plan-features.ts FeatureKey[]).
+  planFeatures     String?
+  // Enterprise / yapay enterprise ayırmak için.
+  isEnterprise     Boolean          @default(false)
+  // BYOK — müşterinin kendi sağlayıcı anahtarı. Şifrelenmiş saklanır.
+  byokProvider     String?
+  byokApiKeyEnc    String?
+  // Faturalandırma ülkesi (TR ise iyzico, diğerleri Stripe USD).
+  billingCountry   String?
+  costCurrency     String           @default("USD")
   organization     Organization     @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
   @@index([deletedAt])
+}
+
+/**
+ * AIUsageLog — her AI çağrısının maliyet ve margin denetimi.
+ * Credits modeli sadece kullanıcıya yansıtılan kredi düşüşünü tutar; bu tablo
+ * sağlayıcıya ödediğimiz gerçek USD maliyetin tek kaynağıdır ve
+ * `docs/pricing-strategy.md` margin raporları buradan beslenir.
+ */
+model AIUsageLog {
+  id             String       @id @default(uuid())
+  organizationId String
+  action         String // credit-catalog id, ör. "video.heyGen.60s"
+  provider       String // "openai" | "heygen" | "runway" …
+  credits        Int // kullanıcıdan düşen kredi
+  costUsd        Decimal      @db.Decimal(10, 6)
+  inputTokens    Int?
+  outputTokens   Int?
+  durationMs     Int?
+  resultUrl      String?
+  errorMessage   String?
+  status         String       @default("ok") // ok | failed | refunded
+  byok           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([action])
+  @@index([provider])
+  @@index([status])
+}
+
+/**
+ * TopUpPackage — plan dışı satın alınan kredi paketi.
+ * Plan dahil krediler tükendiğinde sistem buradan harcamaya düşer.
+ * Top-up krediler 12 ay sonra biter (`expiresAt`).
+ */
+model TopUpPackage {
+  id               String       @id @default(uuid())
+  organizationId   String
+  // Satın alınan kredi miktarı.
+  credits          Int
+  // Tanımlanmış paket id'si ("small", "medium", "large", "mega") veya "custom".
+  packageId        String       @default("custom")
+  // Müşterinin ödediği USD tutar (TR ise costCurrency="TRY").
+  pricePaid        Decimal      @db.Decimal(10, 2)
+  costCurrency     String       @default("USD")
+  // Tüketilmeye başlandığı tarih.
+  consumedAt       DateTime?
+  // Geri kalan kredi (audit için cache, `Credits` tablosundan toplanır).
+  remainingCredits Int
+  expiresAt        DateTime
+  // Stripe / iyzico referans id.
+  paymentRef       String?
+  createdAt        DateTime     @default(now())
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([expiresAt])
+  @@index([paymentRef])
 }
 
 model Customer {

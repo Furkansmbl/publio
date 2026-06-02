@@ -29,6 +29,31 @@ export class SubscriptionService {
     return this._subscriptionRepository.useCredit(organization, type, func);
   }
 
+  /**
+   * Yeni model: aksiyon ba\u015f\u0131 de\u011fi\u015fken kredi + sa\u011flay\u0131c\u0131 maliyeti ile d\u00fc\u015f\u00fcm.
+   * Mevcut k\u00fct\u00fcphane k\u00f6\u015felerinden \u00e7a\u011fr\u0131lacak yeni AI ak\u0131\u015flar\u0131
+   * (HeyGen, Runway, Pika, agent-hour\u2026) bu metodu kullanmal\u0131d\u0131r.
+   */
+  useCreditWithCost<T>(
+    organization: Organization,
+    opts: {
+      type?: string;
+      credits: number;
+      costUsd?: number;
+      provider?: string;
+      action?: string;
+      byok?: boolean;
+      topUpId?: string;
+    },
+    func: () => Promise<T>
+  ): Promise<T> {
+    return this._subscriptionRepository.useCreditWithCost(
+      organization,
+      opts,
+      func
+    );
+  }
+
   getCode(code: string) {
     return this._subscriptionRepository.getCode(code);
   }
@@ -231,10 +256,22 @@ export class SubscriptionService {
     }
 
     const checkFromMonth = date.subtract(1, 'month');
-    const imageGenerationCount =
-      checkType === 'ai_images'
-        ? pricing[type].image_generation_count
-        : pricing[type].generate_videos;
+
+    /*
+     * Publio credit-pricing model:
+     *   - `ai_credits` checkType bekleniyorsa plan dahil ayl\u0131k Publio Credit
+     *     (`monthly_credits`) baz\u0131nda kalan tutar\u0131 d\u00f6nd\u00fcr\u00fcr.
+     *   - `ai_images` / `ai_videos` eski sayma\u00e7lar\u0131 \u2014 geriye d\u00f6n\u00fck uyumluluk
+     *     i\u00e7in mevcut alanlar\u0131 kullanmaya devam eder.
+     */
+    let allowance: number;
+    if (checkType === 'ai_credits') {
+      allowance = pricing[type].monthly_credits ?? 0;
+    } else if (checkType === 'ai_images') {
+      allowance = pricing[type].image_generation_count;
+    } else {
+      allowance = pricing[type].generate_videos;
+    }
 
     const totalUse = await this._subscriptionRepository.getCreditsFrom(
       organization.id,
@@ -243,7 +280,7 @@ export class SubscriptionService {
     );
 
     return {
-      credits: imageGenerationCount - totalUse,
+      credits: allowance - totalUse,
     };
   }
 
