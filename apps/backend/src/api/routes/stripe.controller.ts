@@ -6,6 +6,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
+import { TopUpService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/top-up.service';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Stripe')
@@ -13,6 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 export class StripeController {
   constructor(
     private readonly _stripeService: StripeService,
+    private readonly _topUpService: TopUpService
   ) {}
 
   @Post('/')
@@ -24,11 +26,15 @@ export class StripeController {
       process.env.STRIPE_SIGNING_KEY
     );
 
+    // @ts-ignore
+    const meta = event?.data?.object?.metadata;
+    const isTopUp = meta?.service === 'gitroom_topup';
+    const isGitroom = meta?.service === 'gitroom';
+
     // Maybe it comes from another stripe webhook
     if (
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      event?.data?.object?.metadata?.service !== 'gitroom' &&
+      !isGitroom &&
+      !isTopUp &&
       event.type !== 'invoice.payment_succeeded'
     ) {
       return { ok: true };
@@ -36,6 +42,12 @@ export class StripeController {
 
     try {
       switch (event.type) {
+        case 'checkout.session.completed':
+          // Top-up paketleri sadece bu event'le tetiklenir.
+          if (isTopUp) {
+            return this._topUpService.applyPurchaseFromStripe(event);
+          }
+          return { ok: true };
         case 'invoice.payment_succeeded':
           return this._stripeService.paymentSucceeded(event);
         case 'customer.subscription.created':

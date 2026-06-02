@@ -1001,6 +1001,14 @@ enum SubscriptionTier {
   PRO
   TEAM
   ULTIMATE
+  // Publio brand tiers — production'da `var/migrations/2026-06-02-publio-pricing-model.sql`
+  // çalıştırıldıktan sonra aktif olur. Kod tarafında `BRAND_TO_LEGACY` mapping
+  // sayesinde bu değerler eski tier'lara da haritalanabilir.
+  STARTER
+  CREATOR
+  BUSINESS
+  AGENCY
+  ENTERPRISE
 }
 
 enum Period {

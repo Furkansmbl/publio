@@ -7,6 +7,7 @@ import { UsersRepository } from '@gitroom/nestjs-libraries/database/prisma/users
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { SubscriptionRepository } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.repository';
 import { CreditCostService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/credit-cost.service';
+import { TopUpService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/top-up.service';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { IntegrationRepository } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.repository';
@@ -61,6 +62,7 @@ import { AdminStatsService } from '@gitroom/nestjs-libraries/database/prisma/adm
     SubscriptionService,
     SubscriptionRepository,
     CreditCostService,
+    TopUpService,
     NotificationService,
     NotificationsRepository,
     WebhooksRepository,
