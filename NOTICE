@@ -1,0 +1,26 @@
+Publio
+======
+
+Bu yazılım, Postiz (https://github.com/gitroomhq/postiz-app) projesinin
+GNU Affero General Public License v3.0 (AGPL-3.0) kapsamında lisanslanmış
+kaynağı temel alınarak Verihane tarafından sürdürülen ve "Publio" markası
+altında dağıtılan bir türevdir (fork).
+
+Telif hakkı bildirimleri:
+- Original Postiz code: Copyright (c) Gitroom and Postiz contributors.
+- Publio modifications: Copyright (c) 2026 Verihane.
+
+AGPL-3.0 §5 ve §7 uyarınca:
+- Tüm kaynak kodu, üçüncü kişilerin de aynı lisans koşullarıyla
+  inceleyip değiştirebilmesi için açık olarak yayımlanmıştır.
+- Bu yazılımı bir ağ üzerinden kullanıcılarınıza sunduğunuzda,
+  kullanıcılarınıza karşılık gelen kaynak koduna erişim hakkı
+  sağlamak yükümlülüğü altındasınız.
+- Postiz adı, logosu ve marka unsurları orijinal sahiplerine aittir;
+  Publio bağımsız bir markadır.
+
+Kaynak kodu: https://github.com/Furkansmbl/publio
+Lisans metni : LICENSE dosyasına bakınız.
+
+Üçüncü taraf bileşenler kendi lisanslarına tâbidir; ilgili `package.json`
+ve `node_modules` dosyalarındaki lisans bildirimlerine bakınız.

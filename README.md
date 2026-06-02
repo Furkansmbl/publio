@@ -1,148 +1,138 @@
+<h1 align="center">Publio</h1>
+
 <p align="center">
-  <a href="https://postiz.com/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/765e9d72-3ee7-4a56-9d59-a2c9befe2311">
-    <img alt="Postiz Logo" src="https://github.com/user-attachments/assets/f0d30d70-dddb-4142-8876-e9aa6ed1cb99" width="280"/>
-  </picture>
-  </a>
+  <strong>AI destekli, çok kanallı sosyal medya orkestrasyon platformu.</strong><br/>
+  Tek panelden 28+ kanala planla, yayınla, ölç ve büyüt.
 </p>
 
 <p align="center">
-<a href="https://opensource.org/license/agpl-v3">
-  <img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License">
-</a>
+  <a href="https://opensource.org/license/agpl-v3"><img src="https://img.shields.io/badge/License-AGPL%203.0-blue.svg" alt="License"></a>
+  <a href="https://github.com/Furkansmbl/publio"><img src="https://img.shields.io/badge/source-github-black.svg" alt="Source"></a>
+  <img src="https://img.shields.io/badge/node-%3E=20.17.0-43853d.svg" alt="Node">
+  <img src="https://img.shields.io/badge/pnpm-%3E=8-orange.svg" alt="pnpm">
 </p>
 
-<h3 align="center"><strong><a href="https://github.com/gitroomhq/postiz-agent">NEW: check out Postiz agent CLI! perfect for OpenClaw and other agents</a></strong></h3>
-<div align="center">
-  <strong>
-  <h2>Your ultimate AI social media scheduling tool</h2><br />
-  <a href="https://postiz.com">Postiz</a>: An alternative to: Buffer.com, Hypefury, Twitter Hunter, etc...<br /><br />
-  </strong>
-  Postiz offers everything you need to manage your social media posts,<br />build an audience, capture leads, and grow your business.
-</div>
+---
 
-<div class="flex" align="center">
-  <br />
-  <img alt="Instagram" src="https://postiz.com/svgs/socials/Instagram.svg" width="32">
-  <img alt="Youtube" src="https://postiz.com/svgs/socials/Youtube.svg" width="32">
-  <img alt="Dribbble" src="https://postiz.com/svgs/socials/Dribbble.svg" width="32">
-  <img alt="Linkedin" src="https://postiz.com/svgs/socials/Linkedin.svg" width="32">
-  <img alt="Reddit" src="https://postiz.com/svgs/socials/Reddit.svg" width="32">
-  <img alt="TikTok" src="https://postiz.com/svgs/socials/TikTok.svg" width="32">
-  <img alt="Facebook" src="https://postiz.com/svgs/socials/Facebook.svg" width="32">
-  <img alt="Pinterest" src="https://postiz.com/svgs/socials/Pinterest.svg" width="32">
-  <img alt="Threads" src="https://postiz.com/svgs/socials/Threads.svg" width="32">
-  <img alt="X" src="https://postiz.com/svgs/socials/X.svg" width="32">
-  <img alt="Slack" src="https://postiz.com/svgs/socials/Slack.svg" width="32">
-  <img alt="Discord" src="https://postiz.com/svgs/socials/Discord.svg" width="32">
-  <img alt="Mastodon" src="https://postiz.com/svgs/socials/Mastodon.svg" width="32">
-  <img alt="Bluesky" src="https://postiz.com/svgs/socials/Bluesky.svg" width="32">
-</div>
+## ⚡ Publio nedir?
 
-<p align="center">
-  <br />
-  <a href="https://docs.postiz.com" rel="dofollow"><strong>Explore the docs »</strong></a>
-  <br />
+Publio; içerik üretimi, planlama, yayınlama, analiz ve ekip iş birliğini tek
+bir açık kaynaklı platformda toplayan kurumsal seviye bir **sosyal medya
+yönetim ve AI ajan altyapısıdır**. Kendi sunucunuzda barındırabilir veya
+yönetilen Publio Cloud servisini kullanabilirsiniz.
 
-  <br />
-  <a href="https://youtube.com/@postizofficial" rel="dofollow"><strong>Watch the YouTube Tutorials»</strong></a>
-  <br />
-</p>
+Publio, [Postiz](https://github.com/gitroomhq/postiz-app) açık kaynak
+projesinin AGPL-3.0 lisansı altında **Verihane** tarafından sürdürülen ve
+geliştirilen bir türevidir. Detaylar için [`NOTICE`](NOTICE) dosyasına
+bakınız.
 
-<p align="center">
-  <a href="https://platform.postiz.com">Register</a>
-  ·
-  <a href="https://discord.postiz.com">Join Our Discord (devs only)</a>
-  ·
-  <a href="https://docs.postiz.com/public-api">Public API</a><br />
-</p>
-<p align="center">
-  <a href="https://www.npmjs.com/package/@postiz/node">NodeJS SDK</a>
-  ·
-  <a href="https://www.npmjs.com/package/n8n-nodes-postiz">N8N custom node</a>
-  ·
-  <a href="https://apps.make.com/postiz">Make.com integration</a>
-</p>
+## ✨ Öne çıkan özellikler
 
-<br /><br />
+- **28+ kanal:** Instagram, YouTube, LinkedIn, TikTok, Facebook, X, Threads,
+  Reddit, Pinterest, Discord, Slack, Telegram, Mastodon, Bluesky, Dev.to,
+  Medium, Hashnode, WordPress, Dribbble, Lemmy, VK, Nostr, Google My Business
+  ve daha fazlası.
+- **AI ajan motoru:** Caption / başlık üretimi, görsel oluşturma, video
+  scripting, HeyGen / ElevenLabs / Runway / OpenAI / Anthropic entegrasyonu.
+- **Akıllı takvim:** Drag-and-drop, evergreen rotasyonu, optimum saat önerisi.
+- **Ekip iş birliği:** Onay akışları, roller, yorumlar, marka tonu paylaşımı.
+- **Analitik:** Kanal bazlı performans, içerik karşılaştırma, trend tespiti.
+- **Public API + N8N + Make.com + Zapier** entegrasyonları, NodeJS SDK.
+- **Self-host & Cloud:** Aynı kod tabanı, aynı özellikler.
 
-## 🔌 See the leading Postiz features
+## 🧱 Mimari
 
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=BdsCVvEYgHU" target="_blank">
-    <img alt="Postiz" src="https://github.com/user-attachments/assets/8b9b7939-da1a-4be5-95be-42c6fce772de" />
-  </a>
-</p>
+| Katman          | Teknoloji                                    |
+| --------------- | -------------------------------------------- |
+| Monorepo        | pnpm workspaces + NX                         |
+| Frontend        | Next.js 14 (App Router) + React + Tailwind 3 |
+| Backend         | NestJS (REST + Public API)                   |
+| Orkestrasyon    | Temporal (NestJS workflows & activities)     |
+| Veritabanı      | PostgreSQL + Prisma ORM                      |
+| Kuyruk / Cache  | Redis (BullMQ)                               |
+| E-posta         | Resend                                       |
+| Gözlemlenebilirlik | Sentry                                    |
 
-## ✨ Features
+## 🚀 Hızlı başlangıç (geliştirici)
 
-| ![Image 1](https://github.com/user-attachments/assets/a27ee220-beb7-4c7e-8c1b-2c44301f82ef) | ![Image 2](https://github.com/user-attachments/assets/eb5f5f15-ed90-47fc-811c-03ccba6fa8a2) |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| ![Image 3](https://github.com/user-attachments/assets/d51786ee-ddd8-4ef8-8138-5192e9cfe7c3) | ![Image 4](https://github.com/user-attachments/assets/91f83c89-22f6-43d6-b7aa-d2d3378289fb) |
+Gereksinimler: **Node 20.17+**, **pnpm 8+**, **Docker**, **PostgreSQL**, **Redis**.
 
-### Our Sponsors
+```bash
+git clone https://github.com/Furkansmbl/publio.git
+cd publio
+cp .env.example .env             # değerleri doldurun
+pnpm install
+docker compose -f docker-compose.dev.yaml up -d
+pnpm run prisma-db-push
+pnpm run dev
+```
 
-| Sponsor |                                  Logo                                   | Description     |
-|---------|:-----------------------------------------------------------------------:|-----------------|
-| [Hostinger](https://www.hostinger.com/vps/docker/postiz?ref=postiz) | <img src=".github/sponsors/hostinger.png" alt="Hostinger" width="500"/> | Hostinger is on a mission to make online success possible for anyone – from developers to aspiring bloggers and business owners |
-| [Virlo](https://dev.virlo.ai/?ref=postiz) | <img src="https://github.com/user-attachments/assets/25182598-5344-45fc-b9cd-e4cfa16aabfd" alt="Virlo" width="500"/> | Virlo is the #1 social media trend spotting and all-in-one GTM tool for teams leveraging short-form video |
+Servisler:
 
+- Frontend: <http://localhost:4200>
+- Backend API: <http://localhost:3001>
+- Orchestrator: <http://localhost:3002>
 
+## 📦 Komutlar
 
-# Intro
+| Komut                       | Açıklama                            |
+| --------------------------- | ----------------------------------- |
+| `pnpm run dev`              | Tüm uygulamaları geliştirme modunda |
+| `pnpm run build`            | Tümünü üretim için derle            |
+| `pnpm test`                 | Jest ile test (kapsam dahil)        |
+| `pnpm run prisma-generate`  | Prisma client üret                  |
+| `pnpm run prisma-db-push`   | Şemayı veritabanına uygula          |
 
-- Schedule all your social media posts (many AI features)
-- Measure your work with analytics.
-- Collaborate with other team members to exchange or buy posts.
-- Invite your team members to collaborate, comment, and schedule posts.
-- At the moment there is no difference between the hosted version to the self-hosted version
-- Perfect for automation (API) with platforms like N8N, Make.com, Zapier, etc.
+## 🗂️ Klasör yapısı
 
-## Tech Stack
+```
+apps/
+  backend/        NestJS API (controllers + services)
+  orchestrator/   Temporal workflows / activities
+  frontend/       Next.js arayüzü
+  commands/       CLI / cron komutları
+  extension/      Tarayıcı uzantısı (Vite + React)
+  sdk/            Resmî NodeJS SDK
+libraries/        Paylaşılan modüller (helpers, NestJS, React)
+```
 
-- Pnpm workspaces (Monorepo)
-- NextJS (React)
-- NestJS
-- Prisma (Default to PostgreSQL)
-- Temporal
-- Resend (email notifications)
+## 💼 Ticari kullanım & Cloud
 
-## Quick Start
+Publio kaynak kodu **AGPL-3.0** lisansı ile dağıtılır. Bu, ağ üzerinden
+hizmet sunduğunuzda kaynak kodu paylaşma yükümlülüğü doğurur. Kendi
+ürününüzde gizli tutmak istiyorsanız ya da kurumsal SLA / destek almak
+istiyorsanız <info@verihane.net> üzerinden ticari lisans ve Publio Cloud
+hakkında bilgi alabilirsiniz.
 
-To have the project up and running, please follow the [Quick Start Guide](https://docs.postiz.com/quickstart)
+Fiyatlandırma stratejisi ve token-bazlı maliyet modeli için bkz.
+[`docs/pricing-strategy.md`](docs/pricing-strategy.md).
 
-## Sponsor Postiz
+## 🤝 Katkı
 
-We now give a few options to Sponsor Postiz:
-- Just a donation: You like what we are building, and want to buy us some coffees so we can build faster.
-- Main Repository: Get your logo with a backlink from the main Postiz repository. Postiz has almost 3m downloads and 20k views per month.
-- Main Repository + Website: Get your logo on the central repository and the main website. Here are some metrics: - Website has 20k hits per month + 65 DR (strong backlink) - Repository has 20k hits per month + Almost 3m docker downloads.
+PR'lar memnuniyetle karşılanır. Conventional Commits (`feat:`, `fix:`,
+`chore:` …) kullanın. Önemli bir değişiklik için önce issue açın.
 
-Link: https://opencollective.com/postiz
+## 🛡️ Güvenlik
 
-## Postiz Compliance
+Güvenlik açığı bildirimleri için <security@verihane.net> adresine yazın.
+Açığı kamuoyuna duyurmadan önce 90 günlük koordineli açıklama süresi tanıyın.
 
-- Postiz is an open-source, self-hosted social media scheduling tool that supports platforms like X (formerly Twitter), Bluesky, Mastodon, Discord, and others.
-- Postiz hosted service uses official, platform-approved OAuth flows.
-- Postiz does not automate or scrape content from social media platforms.
-- Postiz does not collect, store, or proxy API keys or access tokens from users.
-- Postiz never ask users to paste API keys into our hosted product.
-- Postiz Users always authenticate directly with the social platform (e.g., X, Discord, etc.), ensuring platform compliance and data privacy.
+## 📜 Lisans
 
-## Star History
+GNU Affero General Public License v3.0 — bkz. [`LICENSE`](LICENSE) ve
+[`NOTICE`](NOTICE).
 
-[![Star History Chart](https://api.star-history.com/svg?repos=gitroomhq/postiz-app&type=date&legend=top-left)](https://www.star-history.com/#gitroomhq/postiz-app&type=date&legend=top-left)
+```
+Publio — Copyright (C) 2026 Verihane
+Postiz upstream — Copyright (C) Gitroom and Postiz contributors
 
-## License
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, version 3.
+```
 
-This repository's source code is available under the [AGPL-3.0 license](LICENSE).
-
-<br /><br /><br />
+---
 
 <p align="center">
-  <a href="https://www.g2.com/products/postiz/take_survey" target="blank"><img alt="g2" src="https://github.com/user-attachments/assets/892cb74c-0b49-4589-b2f5-fbdbf7a98f66" /></a>
-</p>
-<p align="center">
-  <img src="https://github.com/snyk-labs/secure-developer-sample-repo/raw/main/badge_full.svg" alt="Secure Developer Badge Full" width="150">
+  <sub>İşletilen ve sürdürülen: <strong>Verihane</strong> · Çankaya / Ankara · <a href="mailto:info@verihane.net">info@verihane.net</a></sub>
 </p>
