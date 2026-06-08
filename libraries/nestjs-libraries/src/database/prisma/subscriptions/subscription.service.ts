@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { SubscriptionRepository } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.repository';
+import { CreditCostService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/credit-cost.service';
+import { CreditActionId } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/credit-catalog';
+import {
+  TRIAL_CREDIT_CAP,
+  TRIAL_DAYS,
+} from '@gitroom/nestjs-libraries/database/prisma/subscriptions/credit-catalog';
+import { LegacyTier } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/plan-features';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { Organization } from '@prisma/client';
@@ -12,7 +19,8 @@ export class SubscriptionService {
   constructor(
     private readonly _subscriptionRepository: SubscriptionRepository,
     private readonly _integrationService: IntegrationService,
-    private readonly _organizationService: OrganizationService
+    private readonly _organizationService: OrganizationService,
+    private readonly _creditCostService: CreditCostService
   ) {}
 
   getSubscriptionByOrganizationId(organizationId: string) {
@@ -52,6 +60,154 @@ export class SubscriptionService {
       opts,
       func
     );
+  }
+
+  /**
+   * Faturalandırma döngüsünün başlangıcını hesaplar (abonelik createdAt'ten
+   * itibaren aylık ilerletilir).
+   */
+  private cycleStart(createdAt?: Date | null): dayjs.Dayjs {
+    let date = dayjs(createdAt ?? new Date());
+    while (date.isBefore(dayjs())) {
+      date = date.add(1, 'month');
+    }
+    return date.subtract(1, 'month');
+  }
+
+  /**
+   * Dinamik ucretsiz-deneme durumu. Trial, Stripe `isTrailing` bayragi ile
+   * aktiftir ve abonelik baslangicindan itibaren 7 gun (TRIAL_DAYS) dinamik
+   * olarak hesaplanir. Trial suresince AI kredi tuketimi TRIAL_CREDIT_CAP ile
+   * sinirlidir (zarar korumasi).
+   */
+  getTrialStatus(
+    organization: Organization,
+    subscription?: { createdAt?: Date | null } | null
+  ): {
+    active: boolean;
+    endsAt: Date | null;
+    daysLeft: number;
+    creditCap: number;
+  } {
+    const active = !!organization?.isTrailing;
+    const start = dayjs(subscription?.createdAt ?? organization?.createdAt);
+    const end = start.add(TRIAL_DAYS, 'day');
+    const daysLeft = active ? Math.max(0, end.diff(dayjs(), 'day')) : 0;
+    return {
+      active,
+      endsAt: active ? end.toDate() : null,
+      daysLeft,
+      creditCap: TRIAL_CREDIT_CAP,
+    };
+  }
+
+  /**
+   * Birleşik kredi tüketimi (Publio credit-pricing).
+   *
+   * Tek bir AI aksiyonu (catalog id) için:
+   *   1) Tier + feature gating (skipTierFeature ile atlanabilir),
+   *   2) Plan dahil aylık + top-up bakiyesi yeterlilik kontrolü,
+   *   3) Aylık → top-up sırasıyla düşüm,
+   *   4) BYOK ise düşüm yok (yalnızca audit log),
+   *   5) Hata olursa tam refund.
+   *
+   * AI üretim akışları (görsel/video/agent) bu metodu kullanmalıdır.
+   */
+  async chargeCredit<T>(
+    organization: Organization,
+    actionId: CreditActionId,
+    func: () => Promise<T>,
+    options?: {
+      costUsdOverride?: number;
+      skipTierFeature?: boolean;
+      skipCostCap?: boolean;
+      type?: string;
+    }
+  ): Promise<T> {
+    const subscription =
+      await this._subscriptionRepository.getSubscriptionByOrganizationId(
+        organization.id
+      );
+    const dbTier = (subscription?.subscriptionTier ?? 'FREE') as LegacyTier;
+    const isEnterprise = !!(subscription as any)?.isEnterprise;
+    const byok = !!(subscription as any)?.byokApiKeyEnc;
+
+    const from = this.cycleStart(subscription?.createdAt);
+    const consumedThisCycle =
+      await this._subscriptionRepository.getConsumedCreditsFrom(
+        organization.id,
+        from
+      );
+    const topUpRemaining = byok
+      ? 0
+      : await this._subscriptionRepository.getTopUpRemaining(organization.id);
+
+    const trial = this.getTrialStatus(organization, subscription);
+
+    const check = this._creditCostService.precheck({
+      organizationId: organization.id,
+      consumedThisCycle,
+      topUpRemaining,
+      dbTier,
+      isEnterprise,
+      actionId,
+      costUsdOverride: options?.costUsdOverride,
+      byok,
+      skipTierFeature: options?.skipTierFeature,
+      skipCostCap: options?.skipCostCap,
+      trialActive: trial.active,
+      trialCreditCap: trial.creditCap,
+    });
+
+    return this._subscriptionRepository.applyCreditCharge(
+      organization,
+      {
+        action: check.action.id,
+        provider: check.action.provider,
+        costUsd: check.costUsd,
+        fromMonthly: check.fromMonthly,
+        fromTopUp: check.fromTopUp,
+        byok,
+        type: options?.type ?? 'ai_credits',
+      },
+      func
+    );
+  }
+
+  /**
+   * Organizasyonun toplam kullanılabilir kredisi (plan dahil kalan + top-up).
+   * Hızlı ön-kontroller için kullanılır (örn. controller seviyesinde block).
+   */
+  async getRemainingCredits(organization: Organization): Promise<number> {
+    const subscription =
+      await this._subscriptionRepository.getSubscriptionByOrganizationId(
+        organization.id
+      );
+    const dbTier = (subscription?.subscriptionTier ?? 'FREE') as LegacyTier;
+    if (dbTier === 'FREE' || !subscription) {
+      return this._subscriptionRepository.getTopUpRemaining(organization.id);
+    }
+
+    const monthlyAllowance =
+      (subscription as any)?.monthlyCredits ??
+      pricing[dbTier]?.monthly_credits ??
+      0;
+    // Trial sirasinda efektif tavan TRIAL_CREDIT_CAP ile sinirlidir.
+    const trial = this.getTrialStatus(organization, subscription);
+    const effectiveAllowance = trial.active
+      ? Math.min(monthlyAllowance, trial.creditCap)
+      : monthlyAllowance;
+    const from = this.cycleStart(subscription.createdAt);
+    const consumed =
+      await this._subscriptionRepository.getConsumedCreditsFrom(
+        organization.id,
+        from
+      );
+    // Trial sirasinda top-up bakiyesi devreye girmez.
+    const topUp = trial.active
+      ? 0
+      : await this._subscriptionRepository.getTopUpRemaining(organization.id);
+    return Math.max(0, effectiveAllowance - consumed) + topUp;
   }
 
   getCode(code: string) {

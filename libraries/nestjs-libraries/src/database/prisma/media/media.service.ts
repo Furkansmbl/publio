@@ -28,6 +28,20 @@ function featureKeyForVideoType(type: string): FeatureKey {
   return 'ai.proModels';
 }
 
+/**
+ * Video sağlayıcı id'sine göre tahmini sağlayıcı maliyetini (USD) döner.
+ * Yalnızca AIUsageLog margin raporu içindir; kredi düşümünü etkilemez.
+ */
+function videoProviderCost(type: string): { provider: string; costUsd: number } {
+  const lower = (type || '').toLowerCase();
+  if (lower.includes('veo')) return { provider: 'google', costUsd: 0.4 };
+  if (lower.includes('heygen')) return { provider: 'heygen', costUsd: 0.5 };
+  if (lower.includes('runway')) return { provider: 'runway', costUsd: 0.5 };
+  if (lower.includes('pika')) return { provider: 'pika', costUsd: 0.3 };
+  if (lower.includes('synthesia')) return { provider: 'synthesia', costUsd: 1.5 };
+  return { provider: 'internal', costUsd: 0 };
+}
+
 @Injectable()
 export class MediaService {
   private storage = UploadFactory.createStorage();
@@ -53,9 +67,12 @@ export class MediaService {
     org: Organization,
     generatePromptFirst?: boolean
   ) {
-    const generating = await this._subscriptionService.useCredit(
+    // Publio birleşik kredi modeli: görsel üretimi katalog (image.gptImage)
+    // kredisi ile düşer; plan dahil aylık krediden + (yetmezse) top-up'tan
+    // harcanır, BYOK ise ücretsizdir, hata olursa otomatik refund yapılır.
+    const generating = await this._subscriptionService.chargeCredit(
       org,
-      'ai_images',
+      'image.gptImage',
       async () => {
         if (generatePromptFirst) {
           prompt = await this._openAi.generatePromptForPicture(prompt);
@@ -130,9 +147,22 @@ export class MediaService {
     await video.instance.processAndValidate(body.customParams);
     console.log('no err');
 
-    return await this._subscriptionService.useCredit(
+    // Video sağlayıcı maliyetini margin raporu için logla (kredi sayımı
+    // mevcut aylık video kotasıyla aynı kalır: 1 kredi / ai_videos).
+    const { provider, costUsd } = videoProviderCost(body.type);
+    // @ts-ignore
+    const byok = !!(org as any)?.subscription?.byokApiKeyEnc;
+
+    return await this._subscriptionService.useCreditWithCost(
       org,
-      'ai_videos',
+      {
+        type: 'ai_videos',
+        credits: 1,
+        action: `video.${body.type}`,
+        provider,
+        costUsd,
+        byok,
+      },
       async () => {
         const loadedData = await video.instance.process(
           body.output,

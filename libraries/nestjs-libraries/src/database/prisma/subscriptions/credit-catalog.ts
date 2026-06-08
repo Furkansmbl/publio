@@ -19,6 +19,24 @@ export const CREDIT_USD_COST = 0.001;        // her kredi sağlayıcıya $0.001 
 export const CREDIT_USD_PRICE = 0.0025;      // satış: $0.0025 / kredi
 export const CREDIT_PER_CALL_HARD_CAP_USD = 0.5; // tek çağrı $0.50'yi aşarsa reddet
 
+/**
+ * Ücretsiz deneme (trial) koruması.
+ * --------------------------------
+ * Trial 7 gün sürer (Stripe `trial_period_days: 7` ile uyumlu) ve dinamik
+ * olarak abonelik başlangıcından itibaren hesaplanır.
+ *
+ * Trial süresince AI kredi tüketimi `TRIAL_CREDIT_CAP` ile sınırlandırılır;
+ * böylece deneme kullanıcıları ürünü test edebilir ama sağlayıcı maliyeti
+ * kontrol altında kalır (zarar koruması).
+ *
+ * Maliyet analizi: 300 kredi worst-case `image.gptImage` (50 kr / $0.04) ile
+ * 6 görsel ≈ $0.24 sağlayıcı maliyeti — tek çağrı hard-cap'ın ($0.50) altında,
+ * trial başına toplam maliyet < $0.30. Pahalı video sağlayıcıları trial'da zaten
+ * tamamen bloklanır (media.service `!video.trial && isTrailing`).
+ */
+export const TRIAL_DAYS = 7;
+export const TRIAL_CREDIT_CAP = 300;
+
 export type PlanTier =
   | 'FREE'
   | 'STARTER'

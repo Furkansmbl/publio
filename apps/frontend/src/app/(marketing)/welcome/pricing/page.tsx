@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { PubBottomCta } from '../../_lib/shell';
+import { PubBottomCta, PubPaymentBadges } from '../../_lib/shell';
 
 type Tier = {
   name: string;
@@ -195,6 +195,7 @@ const faqs: [string, string][] = [
   ['Yıllık ödemede ne kadar tasarruf ediyorum?', 'Yıllık ödemede tüm planlarda %20 indirim uygulanır; effektif aylık ücretiniz görünen üst rakamın yerine indirimli rakam olur.'],
   ['Kendi API anahtarımı (BYOK) kullanabilir miyim?', 'Evet. Enterprise PAYG modelinde kendi OpenAI / Anthropic / HeyGen anahtarınızı bağlayabilirsiniz; bu durumda kredi yerine yalnızca platform ücreti ödersiniz.'],
   ['İptal etmek kolay mı?', 'Tek tıkla iptal — hesap ayarlarınızdan. İptal ettiğinizde mevcut dönem sonuna kadar hizmet devam eder; tüketilmemiş krediler için 14 gün içinde iade talep edebilirsiniz.'],
+  ['7 günlük ücretsiz denemede neler dahil?', 'Deneme süresince planın tüm özelliklerini test edebilirsin. Adil kullanım için AI üretimi deneme boyunca ~300 Publio Credit ile sınırlıdır (örn. birkaç premium görsel + onlarca caption). Pahalı video sağlayıcıları (HeyGen, Runway, veo3) deneme sürümünde kapalıdır. Planını başlattığında tam aylık krediye geçersin. Kredi kartı bilgisi istenir ama 7 gün boyunca ücret alınmaz.'],
   ['Fiyatlar TRY olarak gösterilebilir mi?', 'Evet — Türkiye\'den ödeme yapan kullanıcılar için iyzico üzerinden TRY tahsilat aktiftir; fatura KDV dahil kesilir.'],
   ['Self-host edersem fiyat ne olur?', 'Self-host AGPL-3.0 lisansıyla ücretsizdir. AI sağlayıcı maliyetlerini doğrudan siz ödersiniz. Kurumsal destek ve garanti ister misiniz? info@verihane.net'],
 ];
@@ -403,6 +404,19 @@ export default function PricingPage() {
         >
           Tüm fiyatlar KDV hariçtir. Ödeme: Stripe (USD) veya iyzico (TRY). 14 gün içinde tüketilmemiş krediler için tam iade.
         </p>
+        <div className="flex flex-col items-center gap-3 mt-8">
+          <PubPaymentBadges showLabel={false} className="items-center" />
+          <p className="text-[12px] text-[color:var(--pub-ink-faint)]" style={{ fontWeight: 400 }}>
+            iyzico güvencesiyle Visa & Mastercard · 256-bit SSL ile korunan ödeme
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px] text-[color:var(--pub-ink-faint)]">
+            <Link href="/welcome/mesafeli-satis" className="underline hover:text-[color:var(--pub-ink)]">Mesafeli Satış Sözleşmesi</Link>
+            <Link href="/welcome/teslimat-iade" className="underline hover:text-[color:var(--pub-ink)]">Teslimat ve İade Şartları</Link>
+            <Link href="/welcome/refund" className="underline hover:text-[color:var(--pub-ink)]">İade & İptal</Link>
+            <Link href="/welcome/terms" className="underline hover:text-[color:var(--pub-ink)]">Kullanım Şartları</Link>
+            <Link href="/welcome/privacy" className="underline hover:text-[color:var(--pub-ink)]">Gizlilik</Link>
+          </div>
+        </div>
       </section>
 
       {/* Credit top-up section */}

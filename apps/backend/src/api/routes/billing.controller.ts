@@ -1,9 +1,22 @@
-import { Body, Controller, Get, HttpException, Param, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
+import { BillingManagerService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/billing-manager.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization, User } from '@prisma/client';
 import { BillingSubscribeDto } from '@gitroom/nestjs-libraries/dtos/billing/billing.subscribe.dto';
+import { TopUpCheckoutDto } from '@gitroom/nestjs-libraries/dtos/billing/top.up.checkout.dto';
+import { ByokDto } from '@gitroom/nestjs-libraries/dtos/billing/byok.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
@@ -16,8 +29,71 @@ export class BillingController {
   constructor(
     private _subscriptionService: SubscriptionService,
     private _stripeService: StripeService,
-    private _notificationService: NotificationService
+    private _notificationService: NotificationService,
+    private _billingManager: BillingManagerService
   ) {}
+
+  /* ─────────────── Publio credit-pricing endpoints ─────────────── */
+
+  /** Anlık kredi bakiyesi: plan dahil + top-up + kalan + burst tavanı. */
+  @Get('/credits/balance')
+  creditBalance(@GetOrgFromRequest() org: Organization) {
+    return this._billingManager.getCreditBalance(org);
+  }
+
+  /** Sağlayıcı bazında tüketim/maliyet dökümü (şeffaflık paneli). */
+  @Get('/credits/usage')
+  creditUsage(@GetOrgFromRequest() org: Organization) {
+    return this._billingManager.getUsageBreakdown(org);
+  }
+
+  /** Her AI aksiyonunun kredi maliyeti + kullanıcı fiyatı (şeffaf katalog). */
+  @Get('/credits/catalog')
+  creditCatalog() {
+    return this._billingManager.getCreditCatalog();
+  }
+
+  /** Top-up paket listesi (USD veya TRY). */
+  @Get('/topup/packages')
+  topUpPackages(@Query('currency') currency?: 'USD' | 'TRY') {
+    return this._billingManager.listTopUpPackages(
+      currency === 'TRY' ? 'TRY' : 'USD'
+    );
+  }
+
+  /** Top-up satın alma için Stripe Checkout oturumu açar. */
+  @Post('/topup/checkout')
+  topUpCheckout(
+    @GetOrgFromRequest() org: Organization,
+    @Body() body: TopUpCheckoutDto
+  ) {
+    return this._billingManager.createTopUpCheckout(
+      org,
+      body.packageId,
+      body.returnPath
+    );
+  }
+
+  /** BYOK durumunu döner (anahtarı asla göstermez). */
+  @Get('/byok')
+  byokStatus(@GetOrgFromRequest() org: Organization) {
+    return this._billingManager.getByokStatus(org);
+  }
+
+  /** BYOK anahtarını şifreleyip kaydeder (yalnızca izinli planlar). */
+  @Post('/byok')
+  setByok(
+    @GetOrgFromRequest() org: Organization,
+    @Body() body: ByokDto
+  ) {
+    return this._billingManager.setByok(org, body.provider, body.apiKey);
+  }
+
+  /** BYOK anahtarını kaldırır → varsayılan resale moduna döner. */
+  @Delete('/byok')
+  clearByok(@GetOrgFromRequest() org: Organization) {
+    return this._billingManager.clearByok(org);
+  }
 
   @Get('/check/:id')
   async checkId(

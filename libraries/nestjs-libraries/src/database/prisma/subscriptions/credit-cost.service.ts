@@ -23,7 +23,6 @@ import {
 } from './credit-catalog';
 import {
   brandTierFor,
-  burstCapFor,
   hasFeature,
   FeatureKey,
   isAtLeast,
@@ -60,6 +59,8 @@ export interface CreditCheckInput {
   organizationId: string;
   /** Credits modelinden ay ba\u015f\u0131ndan beri t\u00fcketilen toplam (sums type='credit'). */
   consumedThisCycle: number;
+  /** Aktif top-up paketlerinde kalan kredi (plan dahil t\u00fckenince kullan\u0131l\u0131r). */
+  topUpRemaining?: number;
   /** DB'de y\u00fckl\u00fc legacy tier (FREE/STANDARD/...). */
   dbTier: LegacyTier | null;
   /** isEnterprise ise plan limitleri override edilir. */
@@ -68,6 +69,16 @@ export interface CreditCheckInput {
   actionId: CreditActionId;
   /** Override edilmi\u015f maliyet (sa\u011flay\u0131c\u0131 ger\u00e7ek faturas\u0131 d\u00f6nd\u00fcyse). */
   costUsdOverride?: number;
+  /** M\u00fc\u015fteri kendi anahtar\u0131yla \u00e7a\u011f\u0131rd\u0131ysa (BYOK) kredi d\u00fc\u015f\u00fcm\u00fc yap\u0131lmaz. */
+  byok?: boolean;
+  /** Tier + feature gating'i atla (\u00f6r. video ak\u0131\u015f\u0131 gating'i ayr\u0131ca yap\u0131yorsa). */
+  skipTierFeature?: boolean;
+  /** Tek-\u00e7a\u011fr\u0131 USD hard-cap'\u0131n\u0131 atla (\u00f6r. pahal\u0131 video sa\u011flay\u0131c\u0131lar\u0131). */
+  skipCostCap?: boolean;
+  /** Aktif ucretsiz deneme (trial) - kredi tavani dusurulur. */
+  trialActive?: boolean;
+  /** Trial suresince izin verilen toplam kredi tavani. */
+  trialCreditCap?: number;
 }
 
 export interface CreditCheckResult {
@@ -78,6 +89,10 @@ export interface CreditCheckResult {
   burstUsed: boolean;
   monthlyAllowance: number;
   remainingAfter: number;
+  /** Plan dahil ayl\u0131k krediden d\u00fc\u015fecek tutar. */
+  fromMonthly: number;
+  /** Top-up bakiyesinden d\u00fc\u015fecek tutar. */
+  fromTopUp: number;
 }
 
 @Injectable()
@@ -98,29 +113,35 @@ export class CreditCostService {
 
     const brand = brandTierFor(input.dbTier, !!input.isEnterprise);
 
-    // 1) Tier kontrol\u00fc
-    if (!isAtLeast(brand, action.minTier)) {
-      throw new CreditGuardrailException(
-        'tier_too_low',
-        `${action.label} en az ${action.minTier} plan\u0131 gerektirir.`,
-        { required: action.minTier, current: brand }
-      );
-    }
+    if (!input.skipTierFeature) {
+      // 1) Tier kontrol\u00fc
+      if (!isAtLeast(brand, action.minTier)) {
+        throw new CreditGuardrailException(
+          'tier_too_low',
+          `${action.label} en az ${action.minTier} plan\u0131 gerektirir.`,
+          { required: action.minTier, current: brand }
+        );
+      }
 
-    // 2) Feature flag (HeyGen/Runway/Pika \u2026)
-    const featureKey = featureKeyForProvider(action.provider);
-    if (featureKey && !hasFeature(brand, featureKey)) {
-      throw new CreditGuardrailException(
-        'feature_disabled',
-        `Plan\u0131n\u0131z bu \u00f6zelli\u011fi i\u00e7ermiyor (${featureKey}).`,
-        { feature: featureKey, current: brand }
-      );
+      // 2) Feature flag (HeyGen/Runway/Pika \u2026)
+      const featureKey = featureKeyForProvider(action.provider);
+      if (featureKey && !hasFeature(brand, featureKey)) {
+        throw new CreditGuardrailException(
+          'feature_disabled',
+          `Plan\u0131n\u0131z bu \u00f6zelli\u011fi i\u00e7ermiyor (${featureKey}).`,
+          { feature: featureKey, current: brand }
+        );
+      }
     }
 
     const costUsd = input.costUsdOverride ?? action.costUsd;
 
-    // 3) Hard cost cap
-    if (costUsd > CREDIT_PER_CALL_HARD_CAP_USD) {
+    // 3) Hard cost cap (video kategorisi ve a\u00e7\u0131k skip d\u0131\u015f\u0131nda)
+    if (
+      !input.skipCostCap &&
+      action.category !== 'video' &&
+      costUsd > CREDIT_PER_CALL_HARD_CAP_USD
+    ) {
       throw new CreditGuardrailException(
         'cost_cap_exceeded',
         `Tek \u00e7a\u011fr\u0131 maliyeti $${costUsd.toFixed(3)} \u2014 limit $${CREDIT_PER_CALL_HARD_CAP_USD}.`,
@@ -128,32 +149,67 @@ export class CreditCostService {
       );
     }
 
-    // 4) Plan dahil kredi yeter mi?
     const monthlyAllowance =
       MONTHLY_CREDITS[brand] ??
       pricing[input.dbTier ?? 'FREE']?.monthly_credits ??
       0;
-    const burstCap = burstCapFor(brand);
 
-    const usedAfter = input.consumedThisCycle + action.credits;
-    const burstUsed = usedAfter > monthlyAllowance;
+    // BYOK: m\u00fc\u015fteri kendi anahtar\u0131n\u0131 kulland\u0131\u011f\u0131 i\u00e7in kredi d\u00fc\u015f\u00fclmez.
+    const effectiveAllowance =
+      input.trialActive && typeof input.trialCreditCap === 'number'
+        ? Math.min(monthlyAllowance, input.trialCreditCap)
+        : monthlyAllowance;
 
-    if (usedAfter > burstCap) {
+    if (input.byok) {
+      return {
+        action,
+        brandTier: brand,
+        creditsToCharge: action.credits,
+        costUsd,
+        burstUsed: false,
+        monthlyAllowance: effectiveAllowance,
+        remainingAfter: effectiveAllowance,
+        fromMonthly: 0,
+        fromTopUp: 0,
+      };
+    }
+
+    // 4) Plan dahil + top-up bakiyesi yeter mi?
+    const monthlyRemaining = Math.max(
+      0,
+      effectiveAllowance - input.consumedThisCycle
+    );
+    // Trial sirasinda top-up devreye girmez (deneme = saf plan tavani).
+    const topUpRemaining = input.trialActive ? 0 : input.topUpRemaining ?? 0;
+    const available = monthlyRemaining + topUpRemaining;
+
+    if (action.credits > available) {
       throw new CreditGuardrailException(
-        'burst_cap_exceeded',
-        `Burst tavan\u0131 (${burstCap}) a\u015f\u0131ld\u0131. L\u00fctfen plan y\u00fckseltin veya top-up al\u0131n.`,
-        { burstCap, requested: action.credits, consumed: input.consumedThisCycle }
+        'insufficient_credits',
+        `Yetersiz kredi. Gereken ${action.credits}, kalan ${available}. ` +
+          `L\u00fctfen plan y\u00fckseltin veya top-up al\u0131n.`,
+        {
+          required: action.credits,
+          monthlyRemaining,
+          topUpRemaining,
+          available,
+        }
       );
     }
+
+    const fromMonthly = Math.min(action.credits, monthlyRemaining);
+    const fromTopUp = action.credits - fromMonthly;
 
     return {
       action,
       brandTier: brand,
       creditsToCharge: action.credits,
       costUsd,
-      burstUsed,
-      monthlyAllowance,
-      remainingAfter: Math.max(0, burstCap - usedAfter),
+      burstUsed: fromTopUp > 0,
+      monthlyAllowance: effectiveAllowance,
+      remainingAfter: available - action.credits,
+      fromMonthly,
+      fromTopUp,
     };
   }
 

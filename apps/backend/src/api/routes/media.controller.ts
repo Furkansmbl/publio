@@ -56,8 +56,8 @@ export class MediaController {
     @Body('prompt') prompt: string,
     isPicturePrompt = false
   ) {
-    const total = await this._subscriptionService.checkCredits(org);
-    if (process.env.STRIPE_PUBLISHABLE_KEY && total.credits <= 0) {
+    const total = await this._subscriptionService.getRemainingCredits(org);
+    if (process.env.STRIPE_PUBLISHABLE_KEY && total <= 0) {
       return false;
     }
 

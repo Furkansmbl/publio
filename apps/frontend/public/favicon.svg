@@ -1,19 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#4f3df0"/>
       <stop offset="50%" stop-color="#ff7448"/>
       <stop offset="100%" stop-color="#0fbfa1"/>
     </linearGradient>
-    <filter id="rough">
-      <feTurbulence baseFrequency="0.9" numOctaves="2" seed="3"/>
-      <feDisplacementMap in="SourceGraphic" scale="0.8"/>
-    </filter>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#0d0c0a"/>
-  <g filter="url(#rough)">
-    <text x="33" y="50" font-family="'Impact','Arial Black',sans-serif" font-size="56" font-weight="900" font-style="italic" text-anchor="middle" fill="url(#pg)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" transform="rotate(-9 32 32)">P</text>
-  </g>
+  <rect width="64" height="64" rx="14" fill="#0e0d0b"/>
+  <text x="33" y="48" font-family="Impact, 'Arial Black', sans-serif" font-size="48" font-weight="900" font-style="italic" text-anchor="middle" fill="url(#pg)" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round" transform="rotate(-8 32 32)">P</text>
   <circle cx="50" cy="14" r="3" fill="#ff7448"/>
   <circle cx="12" cy="50" r="2" fill="#0fbfa1"/>
 </svg>
