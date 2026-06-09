@@ -17,6 +17,14 @@ import { Integration } from '@prisma/client';
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
 import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 
+const assertInstagramOauthConfigured = () => {
+  if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
+    throw new Error(
+      'Instagram OAuth is not configured. Missing FACEBOOK_APP_ID/FACEBOOK_APP_SECRET'
+    );
+  }
+};
+
 @Rules(
   "Instagram should have at least one attachment, if it's a story, it can have only one picture"
 )
@@ -369,6 +377,7 @@ export class InstagramProvider
   }
 
   async generateAuthUrl() {
+    assertInstagramOauthConfigured();
     const state = makeId(6);
     return {
       url:
@@ -389,6 +398,7 @@ export class InstagramProvider
     codeVerifier: string;
     refresh: string;
   }) {
+    assertInstagramOauthConfigured();
     const getAccessToken = await (
       await fetch(
         'https://graph.facebook.com/v20.0/oauth/access_token' +

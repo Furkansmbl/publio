@@ -214,7 +214,11 @@ export class AuthController {
 
   @Get('/oauth/:provider')
   async oauthLink(@Param('provider') provider: string, @Query() query: any) {
-    return this._authService.oauthLink(provider, query);
+    try {
+      return this._authService.oauthLink(provider, query);
+    } catch (err: any) {
+      return { err: true, message: err?.message || 'OAuth provider is not configured.' };
+    }
   }
 
   @Post('/activate')

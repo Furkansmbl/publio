@@ -19,6 +19,10 @@
 
 import { PlanTier } from './credit-catalog';
 
+// Re-export PlanTier so downstream consumers (credit-cost.service, etc.) can
+// import the canonical brand tier identifier from a single module.
+export type { PlanTier };
+
 export type LegacyTier = 'FREE' | 'STANDARD' | 'TEAM' | 'PRO' | 'ULTIMATE';
 
 /** Legacy enum → Publio brand id eşlemesi (kullanıcıya gösterilen). */

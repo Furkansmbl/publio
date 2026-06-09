@@ -248,8 +248,13 @@ export class IntegrationsController {
       );
 
       return { url };
-    } catch (err) {
-      return { err: true };
+    } catch (err: any) {
+      return {
+        err: true,
+        message:
+          err?.message ||
+          'OAuth provider is not configured. Please check client_id/client_secret settings.',
+      };
     }
   }
 

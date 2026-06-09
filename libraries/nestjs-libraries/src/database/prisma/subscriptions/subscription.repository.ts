@@ -13,6 +13,7 @@ export class SubscriptionRepository {
     private readonly _organization: PrismaRepository<'organization'>,
     private readonly _user: PrismaRepository<'user'>,
     private readonly _credits: PrismaRepository<'credits'>,
+    private readonly _topUp: PrismaRepository<'topUpPackage'>,
     private _usedCodes: PrismaRepository<'usedCodes'>
   ) {}
 
@@ -276,7 +277,7 @@ export class SubscriptionRepository {
    * Plan dahil aylık kredi tükendiğinde bu bakiye kullanılır.
    */
   async getTopUpRemaining(organizationId: string): Promise<number> {
-    const load = await this._credits.model.topUpPackage.aggregate({
+    const load = await this._topUp.model.topUpPackage.aggregate({
       where: {
         organizationId,
         expiresAt: { gt: new Date() },
@@ -340,7 +341,7 @@ export class SubscriptionRepository {
     let remaining = amount;
     const consumed: { id: string; amount: number }[] = [];
 
-    const packages = await this._credits.model.topUpPackage.findMany({
+    const packages = await this._topUp.model.topUpPackage.findMany({
       where: {
         organizationId,
         expiresAt: { gt: new Date() },
@@ -352,7 +353,7 @@ export class SubscriptionRepository {
     for (const pkg of packages) {
       if (remaining <= 0) break;
       const take = Math.min(remaining, pkg.remainingCredits);
-      await this._credits.model.topUpPackage.update({
+      await this._topUp.model.topUpPackage.update({
         where: { id: pkg.id },
         data: { remainingCredits: { decrement: take } },
       });
@@ -366,7 +367,7 @@ export class SubscriptionRepository {
   /** Hata durumunda tüketilen top-up kredilerini paketlere geri yükler. */
   private async _restoreTopUp(entries: { id: string; amount: number }[]) {
     for (const e of entries) {
-      await this._credits.model.topUpPackage
+      await this._topUp.model.topUpPackage
         .update({
           where: { id: e.id },
           data: { remainingCredits: { increment: e.amount } },

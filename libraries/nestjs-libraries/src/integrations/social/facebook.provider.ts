@@ -18,6 +18,12 @@ import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 import { timer } from '@gitroom/helpers/utils/timer';
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
 
+function assertFacebookOauthConfigured() {
+  if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET) {
+    throw new Error('Facebook is not configured (FACEBOOK_APP_ID/FACEBOOK_APP_SECRET missing)');
+  }
+}
+
 @Rules(
   "Facebook posts can be text only, or include photos or a video. If it's a story, it must have at least one attachment (photo or video), and each media is published as a separate story."
 )
@@ -204,6 +210,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
   }
 
   async generateAuthUrl() {
+    assertFacebookOauthConfigured();
     const state = makeId(6);
     return {
       url:
@@ -242,6 +249,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
     codeVerifier: string;
     refresh?: string;
   }) {
+    assertFacebookOauthConfigured();
     const getAccessToken = await (
       await fetch(
         'https://graph.facebook.com/v20.0/oauth/access_token' +

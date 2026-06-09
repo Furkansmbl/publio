@@ -28,7 +28,7 @@ export class TopUpService {
   constructor(
     // Prisma repository helpers — schema migration sonrası "topUpPackage"
     // ve "credits" modelleri otomatik üretilir.
-    private readonly _topUp: PrismaRepository<any>,
+    private readonly _topUp: PrismaRepository<'topUpPackage'>,
     private readonly _credits: PrismaRepository<'credits'>,
     private readonly _organization: PrismaRepository<'organization'>
   ) {}

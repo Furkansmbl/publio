@@ -14,9 +14,18 @@ const makeClient = (redirectUri: string) =>
     redirectUri,
   });
 
+const assertGoogleOauthConfigured = () => {
+  if (!process.env.YOUTUBE_CLIENT_ID || !process.env.YOUTUBE_CLIENT_SECRET) {
+    throw new Error(
+      'Google OAuth is not configured. Missing YOUTUBE_CLIENT_ID/YOUTUBE_CLIENT_SECRET'
+    );
+  }
+};
+
 @AuthProvider({ provider: 'GOOGLE' })
 export class GoogleProvider extends AuthProviderAbstract {
   generateLink(query?: { redirect_uri?: string }) {
+    assertGoogleOauthConfigured();
     const redirectUri = query?.redirect_uri || defaultRedirect();
     return makeClient(redirectUri).generateAuthUrl({
       access_type: 'online',
@@ -31,6 +40,7 @@ export class GoogleProvider extends AuthProviderAbstract {
   }
 
   async getToken(code: string, redirectUri?: string) {
+    assertGoogleOauthConfigured();
     const client = makeClient(redirectUri || defaultRedirect());
     const { tokens } = await client.getToken(code);
     return tokens.access_token!;

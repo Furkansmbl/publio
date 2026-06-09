@@ -3,13 +3,39 @@
 import { useCallback } from 'react';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
+import { useToaster } from '@gitroom/react/toaster/toaster';
 export const GoogleProvider = () => {
   const fetch = useFetch();
   const t = useT();
+  const toaster = useToaster();
   const gotoLogin = useCallback(async () => {
-    const link = await (await fetch('/auth/oauth/GOOGLE')).text();
-    window.location.href = link;
-  }, []);
+    try {
+      const response = await fetch('/auth/oauth/GOOGLE');
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const text = await response.text();
+      let parsed: any;
+      try { parsed = JSON.parse(text); } catch { /* not JSON */ }
+      if (parsed?.err) {
+        throw new Error(parsed.message || 'Google OAuth is not configured on server');
+      }
+      const link = text;
+      if (!link || link.indexOf('http') !== 0) {
+        throw new Error('Google OAuth is not configured on server');
+      }
+      window.location.href = link;
+    } catch (error: any) {
+      toaster.show(
+        error?.message ||
+          t(
+            'google_oauth_not_configured',
+            'Google OAuth is not configured. Please set YOUTUBE_CLIENT_ID and YOUTUBE_CLIENT_SECRET.'
+          ),
+        'warning'
+      );
+    }
+  }, [fetch, toaster, t]);
   return (
     <div
       onClick={gotoLogin}

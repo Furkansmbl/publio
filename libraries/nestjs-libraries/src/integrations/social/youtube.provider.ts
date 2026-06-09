@@ -21,6 +21,14 @@ import { GaxiosResponse } from 'gaxios/build/src/common';
 import Schema$Video = youtube_v3.Schema$Video;
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
 
+const assertYoutubeOauthConfigured = () => {
+  if (!process.env.YOUTUBE_CLIENT_ID || !process.env.YOUTUBE_CLIENT_SECRET) {
+    throw new Error(
+      'YouTube OAuth is not configured. Missing YOUTUBE_CLIENT_ID/YOUTUBE_CLIENT_SECRET'
+    );
+  }
+};
+
 const clientAndYoutube = () => {
   const client = new google.auth.OAuth2({
     clientId: process.env.YOUTUBE_CLIENT_ID,
@@ -280,6 +288,7 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
   }
 
   async generateAuthUrl() {
+    assertYoutubeOauthConfigured();
     const state = makeId(7);
     const { client } = clientAndYoutube();
     return {
@@ -300,6 +309,7 @@ export class YoutubeProvider extends SocialAbstract implements SocialProvider {
     codeVerifier: string;
     refresh?: string;
   }) {
+    assertYoutubeOauthConfigured();
     const { client, oauth2 } = clientAndYoutube();
     const { tokens } = await client.getToken(params.code);
     client.setCredentials(tokens);
